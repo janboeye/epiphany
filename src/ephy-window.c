@@ -37,7 +37,6 @@
 #include "ephy-file-helpers.h"
 #include "ephy-filters-manager.h"
 #include "ephy-find-toolbar.h"
-#include "ephy-gsb-utils.h"
 #include "ephy-gui.h"
 #include "ephy-header-bar.h"
 #include "ephy-link.h"
@@ -2079,10 +2078,11 @@ accept_navigation_policy_decision (EphyWindow           *window,
 }
 
 static gboolean
-decide_navigation_policy (WebKitWebView            *web_view,
-                          WebKitPolicyDecision     *decision,
-                          WebKitPolicyDecisionType  decision_type,
-                          EphyWindow               *window)
+decide_navigation (EphyWindow               *window,
+                   WebKitWebView            *web_view,
+                   WebKitPolicyDecision     *decision,
+                   WebKitPolicyDecisionType  decision_type,
+                   const char               *request_uri)
 {
   WebKitNavigationPolicyDecision *navigation_decision;
   WebKitNavigationAction *navigation_action;
@@ -2090,6 +2090,10 @@ decide_navigation_policy (WebKitWebView            *web_view,
   WebKitURIRequest *request;
   const char *uri;
   EphyEmbed *embed;
+
+  if (decision_type != WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION &&
+      decision_type != WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION)
+    return FALSE;
 
   g_assert (WEBKIT_IS_WEB_VIEW (web_view));
   g_assert (WEBKIT_IS_NAVIGATION_POLICY_DECISION (decision));
@@ -2241,62 +2245,6 @@ decide_navigation_policy (WebKitWebView            *web_view,
   }
 
   return accept_navigation_policy_decision (window, decision, uri);
-}
-
-static void
-verify_url_cb (EphyGSBService     *service,
-               GAsyncResult       *result,
-               VerifyUrlAsyncData *data)
-{
-  GList *threats = ephy_gsb_service_verify_url_finish (service, result);
-
-  if (threats) {
-    webkit_policy_decision_ignore (data->decision);
-
-    /* Very rarely there are URLs that pose multiple types of threats.
-     * However, inform the user only about the first threat type.
-     */
-    ephy_web_view_load_error_page (EPHY_WEB_VIEW (data->web_view),
-                                   data->request_uri,
-                                   EPHY_WEB_VIEW_ERROR_UNSAFE_BROWSING,
-                                   NULL, threats->data);
-
-    g_list_free_full (threats, g_free);
-  } else {
-    decide_navigation_policy (data->web_view, data->decision,
-                              data->decision_type, data->window);
-  }
-
-  verify_url_async_data_free (data);
-}
-
-static gboolean
-decide_navigation (EphyWindow               *window,
-                   WebKitWebView            *web_view,
-                   WebKitPolicyDecision     *decision,
-                   WebKitPolicyDecisionType  decision_type,
-                   const char               *request_uri)
-{
-  EphyGSBService *service;
-
-  if (g_settings_get_boolean (EPHY_SETTINGS_WEB, EPHY_PREFS_WEB_ENABLE_SAFE_BROWSING)) {
-    if (ephy_web_view_get_should_bypass_safe_browsing (EPHY_WEB_VIEW (web_view))) {
-      /* This means the user has decided to proceed to an unsafe website. */
-      ephy_web_view_set_should_bypass_safe_browsing (EPHY_WEB_VIEW (web_view), FALSE);
-      return decide_navigation_policy (web_view, decision, decision_type, window);
-    }
-
-    service = ephy_embed_shell_get_global_gsb_service (ephy_embed_shell_get_default ());
-    ephy_gsb_service_verify_url (service, request_uri,
-                                 (GAsyncReadyCallback)verify_url_cb,
-                                 /* Note: this refs the policy decision, so we can complete it asynchronously. */
-                                 verify_url_async_data_new (window, web_view,
-                                                            decision, decision_type,
-                                                            request_uri));
-    return TRUE;
-  }
-
-  return decide_navigation_policy (web_view, decision, decision_type, window);
 }
 
 static void

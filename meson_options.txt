@@ -4,12 +4,6 @@ option('developer_mode',
   description: 'Enable developer mode'
 )
 
-option('network_tests',
-  type: 'feature',
-  value: 'disabled',
-  description: 'Enable tests that require network access, if unit_tests are enabled'
-)
-
 option('tech_preview',
   type: 'boolean',
   value: false,

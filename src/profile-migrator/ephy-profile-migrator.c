@@ -1422,6 +1422,19 @@ next:
 }
 
 static void
+migrate_gsb_db (void)
+{
+  g_autofree char *threats_db = g_build_filename (ephy_default_cache_dir (), "gsb-threats.db", NULL);
+  g_autofree char *threats_db_journal = g_build_filename (ephy_default_cache_dir (), "gsb-threats.db-journal", NULL);
+
+  if (g_unlink (threats_db) == -1 && errno != ENOENT)
+    g_warning ("Failed to delete %s: %s", threats_db, g_strerror (errno));
+
+  if (g_unlink (threats_db_journal) == -1 && errno != ENOENT)
+    g_warning ("Failed to delete %s: %s", threats_db_journal, g_strerror (errno));
+}
+
+static void
 migrate_nothing (void)
 {
   /* Used to replace migrators that have been removed. Only remove migrators
@@ -1471,6 +1484,7 @@ const EphyProfileMigrator migrators[] = {
   /* 33 */ migrate_adblock_to_content_filters,
   /* 34 */ migrate_adblock_to_shared_cache_dir,
   /* 35 */ migrate_webapp_names,
+  /* 36 */ migrate_gsb_db
 };
 
 static gboolean
