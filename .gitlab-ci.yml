@@ -12,19 +12,38 @@ variables:
   APP_ID: 'org.gnome.Epiphany.Devel'
 
 stages:
+  - image
+  - check
   - test
 
+update image:
+    variables:
+         DOCKER_TLS_CERTDIR: ""
+    image: docker:latest
+    stage: image
+    tags:
+        - privileged
+    services:
+        - docker:dind
+    script:
+        - docker build --tag $CI_REGISTRY_IMAGE .gitlab/
+        - docker tag $CI_REGISTRY_IMAGE "$CI_REGISTRY_IMAGE:v$CI_JOB_ID"
+        - docker login $CI_REGISTRY -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+        - docker push $CI_REGISTRY_IMAGE
+    when: manual
+
 check-code-style:
-  stage: .pre
-  image: alpine:latest
+  stage: check
+  image: registry.gitlab.gnome.org/gnome/epiphany/master:v1
   interruptible: true
-  before_script:
-    - apk update && apk add uncrustify bash python3
   script:
     - bash data/check-code-style
+  dependencies:
+    - update image
 
 flatpak:
   extends: '.flatpak'
+  stage: test
   variables:
     CONFIG_OPTS: '-Dprofile=Devel -Dunit_tests=enabled --werror'
   except:
@@ -32,6 +51,7 @@ flatpak:
 
 flatpak master:
   extends: '.flatpak'
+  stage: test
   variables:
     CONFIG_OPTS: '-Dtech_preview=true -Dprofile=Devel'
   only:
@@ -39,6 +59,7 @@ flatpak master:
 
 flatpak scanbuild:
   extends: '.flatpak'
+  stage: test
   variables:
     CONFIG_OPTS: '-Dprofile=Devel -Dunit_tests=enabled --werror'
   script:
