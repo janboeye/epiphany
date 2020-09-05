@@ -910,23 +910,22 @@ webkit_notification_clicked_cb (WebKitNotification *notification,
 
   for (guint win_idx = 0; win_idx < g_list_length (windows); win_idx++) {
     EphyWindow *window;
-    GtkWidget *notebook;
+    EphyTabView *tab_view;
     int n_pages;
 
     window = EPHY_WINDOW (g_list_nth_data (windows, win_idx));
-
-    notebook = ephy_window_get_notebook (window);
-    n_pages = gtk_notebook_get_n_pages (GTK_NOTEBOOK (notebook));
+    tab_view = ephy_window_get_tab_view (window);
+    n_pages = ephy_tab_view_get_n_pages (tab_view);
 
     for (int i = 0; i < n_pages; i++) {
       EphyEmbed *embed;
       WebKitWebView *webview;
 
-      embed = EPHY_EMBED (gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook), i));
+      embed = EPHY_EMBED (ephy_tab_view_get_nth_page (tab_view, i));
       webview = WEBKIT_WEB_VIEW (ephy_embed_get_web_view (embed));
 
       if (webview == notification_webview) {
-        gtk_notebook_set_current_page (GTK_NOTEBOOK (notebook), i);
+        ephy_tab_view_select_page (tab_view, GTK_WIDGET (embed));
         gtk_window_present (GTK_WINDOW (window));
         return;
       }

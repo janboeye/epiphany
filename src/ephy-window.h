@@ -24,6 +24,7 @@
 #include "ephy-embed.h"
 #include "ephy-embed-event.h"
 #include "ephy-location-controller.h"
+#include "ephy-tab-view.h"
 #include "ephy-web-view.h"
 
 #include <gtk/gtk.h>
@@ -46,7 +47,7 @@ typedef enum
 
 EphyWindow       *ephy_window_new                 (void);
 
-GtkWidget        *ephy_window_get_notebook        (EphyWindow *window);
+EphyTabView      *ephy_window_get_tab_view        (EphyWindow *window);
 
 void              ephy_window_open_pages_view     (EphyWindow *window);
 void              ephy_window_close_pages_view    (EphyWindow *window);

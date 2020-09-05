@@ -23,7 +23,7 @@
 #include <gtk/gtk.h>
 
 #include "ephy-adaptive-mode.h"
-#include "ephy-notebook.h"
+#include "ephy-tab-view.h"
 
 G_BEGIN_DECLS
 
@@ -33,8 +33,8 @@ G_DECLARE_FINAL_TYPE (EphyPagesView, ephy_pages_view, EPHY, PAGES_VIEW, GtkScrol
 
 EphyPagesView *ephy_pages_view_new               (void);
 
-EphyNotebook  *ephy_pages_view_get_notebook      (EphyPagesView   *view);
-void           ephy_pages_view_set_notebook      (EphyPagesView   *view,
-                                                  EphyNotebook    *notebook);
+EphyTabView   *ephy_pages_view_get_tab_view      (EphyPagesView *view);
+void           ephy_pages_view_set_tab_view      (EphyPagesView *view,
+                                                  EphyTabView   *tab_view);
 
 G_END_DECLS
