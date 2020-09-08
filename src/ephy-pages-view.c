@@ -28,7 +28,7 @@
 #include "ephy-window.h"
 
 struct _EphyPagesView {
-  GtkScrolledWindow parent_instance;
+  GtkBox parent_instance;
 
   GtkListBox *list_box;
 
@@ -36,7 +36,7 @@ struct _EphyPagesView {
   EphyTabView *tab_view;
 };
 
-G_DEFINE_TYPE (EphyPagesView, ephy_pages_view, GTK_TYPE_SCROLLED_WINDOW)
+G_DEFINE_TYPE (EphyPagesView, ephy_pages_view, GTK_TYPE_BOX)
 
 static void
 drop_tab_view (EphyPagesView *self)

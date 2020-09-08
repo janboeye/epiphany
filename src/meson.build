@@ -39,7 +39,6 @@ libephymain_sources = [
   'ephy-shell.c',
   'ephy-suggestion-model.c',
   'ephy-tab-view.c',
-  'ephy-tab-header-bar.c',
   'ephy-window.c',
   'popup-commands.c',
   'preferences/clear-data-view.c',
