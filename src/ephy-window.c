@@ -2776,15 +2776,15 @@ reader_mode_cb (EphyWebView *view,
 }
 
 static void
-tab_view_page_added_cb (HdyTabView *tab_view,
-                        HdyTabPage *page,
-                        gint        position,
-                        EphyWindow *window)
+tab_view_page_attached_cb (HdyTabView *tab_view,
+                           HdyTabPage *page,
+                           gint        position,
+                           EphyWindow *window)
 {
   GtkWidget *content = hdy_tab_page_get_child (page);
   EphyEmbed *embed;
 
-  LOG ("page-added tab view %p embed %p position %d\n", tab_view, embed, position);
+  LOG ("page-attached tab view %p embed %p position %d\n", tab_view, embed, position);
 
   g_assert (EPHY_IS_EMBED (content));
 
@@ -2805,13 +2805,14 @@ tab_view_page_added_cb (HdyTabView *tab_view,
 }
 
 static void
-tab_view_page_removed_cb (HdyTabView *tab_view,
-                          HdyTabPage *page,
-                          gint        position,
-                          EphyWindow *window)
+tab_view_page_detached_cb (HdyTabView *tab_view,
+                           HdyTabPage *page,
+                           gint        position,
+                           EphyWindow *window)
 {
   GtkWidget *content = hdy_tab_page_get_child (page);
-  LOG ("page-removed tab view %p embed %p position %d\n", tab_view, content, position);
+
+  LOG ("page-detached tab view %p embed %p position %d\n", tab_view, content, position);
 
   if (window->closing)
     return;
@@ -3146,12 +3147,12 @@ setup_tab_view (EphyWindow *window)
                            window,
                            0);
 
-  g_signal_connect_object (view, "page-added",
-                           G_CALLBACK (tab_view_page_added_cb),
+  g_signal_connect_object (view, "page-attached",
+                           G_CALLBACK (tab_view_page_attached_cb),
                            window,
                            0);
-  g_signal_connect_object (view, "page-removed",
-                           G_CALLBACK (tab_view_page_removed_cb),
+  g_signal_connect_object (view, "page-detached",
+                           G_CALLBACK (tab_view_page_detached_cb),
                            window,
                            0);
   g_signal_connect_object (view, "page-reordered",

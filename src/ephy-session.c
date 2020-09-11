@@ -326,10 +326,10 @@ ephy_session_get_can_undo_tab_closed (EphySession *session)
 }
 
 static void
-tab_view_page_added_cb (HdyTabView  *tab_view,
-                        HdyTabPage  *page,
-                        guint        position,
-                        EphySession *session)
+tab_view_page_attached_cb (HdyTabView  *tab_view,
+                           HdyTabPage  *page,
+                           guint        position,
+                           EphySession *session)
 {
   EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_child (page));
 
@@ -338,10 +338,10 @@ tab_view_page_added_cb (HdyTabView  *tab_view,
 }
 
 static void
-tab_view_page_removed_cb (HdyTabView  *tab_view,
-                          HdyTabPage  *page,
-                          gint         position,
-                          EphySession *session)
+tab_view_page_detached_cb (HdyTabView  *tab_view,
+                           HdyTabPage  *page,
+                           gint         position,
+                           EphySession *session)
 {
   EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_child (page));
   EphyTabView *ephy_tab_view = EPHY_TAB_VIEW (g_object_get_data (G_OBJECT (tab_view), "ephy-tab-view"));
@@ -402,10 +402,10 @@ window_added_cb (GtkApplication *application,
   ephy_window = EPHY_WINDOW (window);
 
   tab_view = ephy_tab_view_get_tab_view (ephy_window_get_tab_view (ephy_window));
-  g_signal_connect (tab_view, "page-added",
-                    G_CALLBACK (tab_view_page_added_cb), session);
-  g_signal_connect (tab_view, "page-removed",
-                    G_CALLBACK (tab_view_page_removed_cb), session);
+  g_signal_connect (tab_view, "page-attached",
+                    G_CALLBACK (tab_view_page_attached_cb), session);
+  g_signal_connect (tab_view, "page-detached",
+                    G_CALLBACK (tab_view_page_detached_cb), session);
   g_signal_connect (tab_view, "page-reordered",
                     G_CALLBACK (tab_view_page_reordered_cb), session);
   g_signal_connect_after (tab_view, "notify::selected-page",
