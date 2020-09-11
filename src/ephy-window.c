@@ -3005,6 +3005,9 @@ tab_view_close_page_cb (HdyTabView *tab_view,
 {
   EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_child (page));
 
+  if (hdy_tab_page_get_pinned (page))
+    return GDK_EVENT_PROPAGATE;
+
   if (ephy_tab_view_get_n_pages (window->tab_view) == 1) {
     if (g_settings_get_boolean (EPHY_SETTINGS_LOCKDOWN,
                                 EPHY_PREFS_LOCKDOWN_QUIT)) {
