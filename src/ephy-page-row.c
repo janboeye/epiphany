@@ -103,7 +103,7 @@ loading_to_visible_child (GBinding     *binding,
 static void
 update_icon_cb (EphyPageRow *self)
 {
-  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_content (self->page));
+  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_child (self->page));
   EphyWebView *view = ephy_embed_get_web_view (embed);
   GIcon *icon = G_ICON (ephy_web_view_get_icon (view));
   const char *uri, *favicon_name;
@@ -136,7 +136,7 @@ ephy_page_row_new (EphyTabView *tab_view,
                    HdyTabPage  *page)
 {
   EphyPageRow *self;
-  GtkWidget *embed = hdy_tab_page_get_content (page);
+  GtkWidget *embed = hdy_tab_page_get_child (page);
   EphyWebView *view;
 
   g_assert (HDY_IS_TAB_PAGE (page));

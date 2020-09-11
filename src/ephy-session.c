@@ -331,7 +331,7 @@ tab_view_page_added_cb (HdyTabView  *tab_view,
                         guint        position,
                         EphySession *session)
 {
-  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_content (page));
+  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_child (page));
 
   g_signal_connect (ephy_embed_get_web_view (embed), "load-changed",
                     G_CALLBACK (load_changed_cb), session);
@@ -343,7 +343,7 @@ tab_view_page_removed_cb (HdyTabView  *tab_view,
                           gint         position,
                           EphySession *session)
 {
-  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_content (page));
+  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_child (page));
   EphyTabView *ephy_tab_view = EPHY_TAB_VIEW (g_object_get_data (G_OBJECT (tab_view), "ephy-tab-view"));
 
   ephy_session_save (session);

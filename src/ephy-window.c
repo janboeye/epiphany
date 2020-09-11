@@ -2781,7 +2781,7 @@ tab_view_page_added_cb (HdyTabView *tab_view,
                         gint        position,
                         EphyWindow *window)
 {
-  GtkWidget *content = hdy_tab_page_get_content (page);
+  GtkWidget *content = hdy_tab_page_get_child (page);
   EphyEmbed *embed;
 
   LOG ("page-added tab view %p embed %p position %d\n", tab_view, embed, position);
@@ -2810,7 +2810,7 @@ tab_view_page_removed_cb (HdyTabView *tab_view,
                           gint        position,
                           EphyWindow *window)
 {
-  GtkWidget *content = hdy_tab_page_get_content (page);
+  GtkWidget *content = hdy_tab_page_get_child (page);
   LOG ("page-removed tab view %p embed %p position %d\n", tab_view, content, position);
 
   if (window->closing)
@@ -3002,7 +3002,7 @@ tab_view_close_page_cb (HdyTabView *tab_view,
                         HdyTabPage *page,
                         EphyWindow *window)
 {
-  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_content (page));
+  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_child (page));
 
   if (ephy_tab_view_get_n_pages (window->tab_view) == 1) {
     if (g_settings_get_boolean (EPHY_SETTINGS_LOCKDOWN,

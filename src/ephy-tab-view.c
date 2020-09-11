@@ -61,7 +61,7 @@ static void
 secondary_icon_activated_cb (EphyTabView *self,
                              HdyTabPage  *page)
 {
-  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_content (page));
+  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_child (page));
   EphyWebView *view = ephy_embed_get_web_view (embed);
   gboolean muted = webkit_web_view_get_is_muted (WEBKIT_WEB_VIEW (view));
 
@@ -242,7 +242,7 @@ ephy_tab_view_foreach (EphyTabView *self,
   for (i = 0; i < n; i++) {
     HdyTabPage *page = hdy_tab_view_get_nth_page (self->tab_view, i);
 
-    callback (hdy_tab_page_get_content (page), user_data);
+    callback (hdy_tab_page_get_child (page), user_data);
   }
 }
 
@@ -266,7 +266,7 @@ ephy_tab_view_get_nth_page (EphyTabView *self,
 {
   HdyTabPage *page = hdy_tab_view_get_nth_page (self->tab_view, index);
 
-  return hdy_tab_page_get_content (page);
+  return hdy_tab_page_get_child (page);
 }
 
 void
@@ -295,7 +295,7 @@ ephy_tab_view_get_selected_page (EphyTabView *self)
 {
   HdyTabPage *page = hdy_tab_view_get_selected_page (self->tab_view);
 
-  return hdy_tab_page_get_content (page);
+  return hdy_tab_page_get_child (page);
 }
 
 HdyTabView *
@@ -314,7 +314,7 @@ ephy_tab_view_get_pages (EphyTabView *self)
 
   for (i = 0; i < n; i++) {
     HdyTabPage *page = hdy_tab_view_get_nth_page (self->tab_view, i);
-    GtkWidget *content = hdy_tab_page_get_content (page);
+    GtkWidget *content = hdy_tab_page_get_child (page);
 
     list = g_list_prepend (list, content);
   }
@@ -334,7 +334,7 @@ ephy_tab_view_get_is_pinned (EphyTabView *self,
 static void
 update_title_cb (HdyTabPage *page)
 {
-  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_content (page));
+  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_child (page));
   EphyWebView *view = ephy_embed_get_web_view (embed);
   const gchar *title = ephy_embed_get_title (embed);
   const gchar *address;
@@ -360,7 +360,7 @@ update_title_cb (HdyTabPage *page)
 static void
 update_icon_cb (HdyTabPage *page)
 {
-  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_content (page));
+  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_child (page));
   EphyWebView *view = ephy_embed_get_web_view (embed);
   g_autoptr (GIcon) icon = G_ICON (ephy_web_view_get_icon (view));
   const char *uri, *favicon_name;
@@ -383,7 +383,7 @@ update_icon_cb (HdyTabPage *page)
 static void
 update_secondary_icon_cb (HdyTabPage *page)
 {
-  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_content (page));
+  EphyEmbed *embed = EPHY_EMBED (hdy_tab_page_get_child (page));
   EphyWebView *view = ephy_embed_get_web_view (embed);
   GIcon *icon = NULL;
 
@@ -449,5 +449,5 @@ ephy_tab_view_add_tab (EphyTabView *self,
 GtkWidget *
 ephy_tab_view_get_current_page (EphyTabView *self)
 {
-  return hdy_tab_page_get_content (get_current_page (self));
+  return hdy_tab_page_get_child (get_current_page (self));
 }
