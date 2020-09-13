@@ -74,4 +74,7 @@ gint          ephy_tab_view_add_tab           (EphyTabView *self,
 
 GtkWidget    *ephy_tab_view_get_current_page  (EphyTabView *self);
 
+void          ephy_tab_view_set_tab_bar       (EphyTabView *self,
+                                               HdyTabBar   *tab_bar);
+
 G_END_DECLS

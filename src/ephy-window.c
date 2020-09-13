@@ -29,7 +29,6 @@
 #include "ephy-bookmarks-manager.h"
 #include "ephy-debug.h"
 #include "ephy-desktop-utils.h"
-#include "ephy-dnd.h"
 #include "ephy-embed-container.h"
 #include "ephy-embed-prefs.h"
 #include "ephy-embed-shell.h"
@@ -78,8 +77,6 @@
  *
  * #EphyWindow is Epiphany's main widget.
  */
-
-#define INSANE_NUMBER_OF_URLS 20
 
 const struct {
   const char *action_and_target;
@@ -441,7 +438,7 @@ sync_chromes_visibility (EphyWindow *window)
 
   show_tabsbar = (window->chrome & EPHY_WINDOW_CHROME_TABSBAR);
 
-  gtk_widget_set_visible (GTK_WIDGET (window->tab_bar),
+  gtk_widget_set_visible (GTK_WIDGET (window->tab_bar_revealer),
                           show_tabsbar && !(window->is_popup));
 }
 
@@ -3170,93 +3167,6 @@ setup_tab_view (EphyWindow *window)
 }
 
 static void
-tab_bar_extra_drag_data_received_cb (EphyWindow       *window,
-                                     HdyTabPage       *page,
-                                     GdkDragContext   *context,
-                                     GtkSelectionData *selection_data,
-                                     guint             info,
-                                     guint             time)
-{
-  EphyEmbed *embed;
-  GdkAtom target;
-  const guchar *data;
-
-  if (g_settings_get_boolean (EPHY_SETTINGS_LOCKDOWN,
-                              EPHY_PREFS_LOCKDOWN_ARBITRARY_URL))
-    return;
-
-  data = gtk_selection_data_get_data (selection_data);
-  if (gtk_selection_data_get_length (selection_data) <= 0 || data == NULL)
-    return;
-
-  embed = EPHY_EMBED (hdy_tab_page_get_child (page));
-  target = gtk_selection_data_get_target (selection_data);
-
-  if (target == gdk_atom_intern (EPHY_DND_URL_TYPE, FALSE)) {
-    char **split;
-
-    /* URL_TYPE has format: url \n title */
-    split = g_strsplit ((const gchar *)data, "\n", 2);
-    if (split != NULL && split[0] != NULL && split[0][0] != '\0') {
-      ephy_link_open (EPHY_LINK (window), NULL, NULL, EPHY_LINK_NEW_TAB);
-      ephy_link_open (EPHY_LINK (window), split[0], embed,
-                      embed ? 0 : EPHY_LINK_NEW_TAB);
-    }
-    g_strfreev (split);
-  } else if (target == gdk_atom_intern (EPHY_DND_URI_LIST_TYPE, FALSE)) {
-    char **uris;
-    int i;
-
-    uris = gtk_selection_data_get_uris (selection_data);
-    if (uris == NULL)
-      return;
-
-    for (i = 0; i < INSANE_NUMBER_OF_URLS && uris[i] != NULL; i++) {
-      embed = ephy_link_open (EPHY_LINK (window), uris[i], embed,
-                              (embed && i == 0) ? 0 : EPHY_LINK_NEW_TAB);
-    }
-
-    g_strfreev (uris);
-  } else {
-    char *text;
-
-    text = (char *)gtk_selection_data_get_text (selection_data);
-    if (text != NULL) {
-      char *address;
-
-      address = ephy_embed_utils_normalize_or_autosearch_address (text);
-      ephy_link_open (EPHY_LINK (window), address, embed,
-                      embed ? 0 : EPHY_LINK_NEW_TAB);
-      g_free (address);
-      g_free (text);
-    }
-  }
-}
-
-static void
-setup_tab_bar (EphyWindow *window)
-{
-  GtkTargetList *target_list;
-  static const GtkTargetEntry url_drag_types [] = {
-    { (char *)EPHY_DND_URI_LIST_TYPE, 0, 0 },
-    { (char *)EPHY_DND_URL_TYPE, 0, 1 },
-  };
-
-  target_list = gtk_target_list_new (url_drag_types,
-                                     G_N_ELEMENTS (url_drag_types));
-  gtk_target_list_add_text_targets (target_list, 0);
-
-  hdy_tab_bar_set_extra_drag_dest_targets (window->tab_bar, target_list);
-
-  gtk_target_list_unref (target_list);
-
-  g_signal_connect_object (window->tab_bar, "extra-drag-data-received",
-                           G_CALLBACK (tab_bar_extra_drag_data_received_cb),
-                           window,
-                           G_CONNECT_SWAPPED);
-}
-
-static void
 ephy_window_dispose (GObject *object)
 {
   EphyWindow *window = EPHY_WINDOW (object);
@@ -3840,8 +3750,6 @@ ephy_window_constructed (GObject *object)
   window->fullscreen_box = hdy_fullscreen_box_new ();
   window->pages_view = ephy_pages_view_new ();
 
-  setup_tab_bar (window);
-
   gtk_revealer_set_transition_type (window->tab_bar_revealer, GTK_REVEALER_TRANSITION_TYPE_SLIDE_DOWN);
   hdy_tab_bar_set_view (window->tab_bar, ephy_tab_view_get_tab_view (window->tab_view));
   ephy_pages_view_set_tab_view (window->pages_view, window->tab_view);
@@ -3886,6 +3794,8 @@ ephy_window_constructed (GObject *object)
   gtk_widget_show (GTK_WIDGET (window->tab_view));
   gtk_widget_show (GTK_WIDGET (window->tab_bar));
   gtk_widget_show (GTK_WIDGET (window->tab_bar_revealer));
+
+  ephy_tab_view_set_tab_bar (window->tab_view, window->tab_bar);
 
   hdy_deck_set_visible_child (HDY_DECK (window->main_deck), GTK_WIDGET (window->fullscreen_box));
   hdy_deck_set_can_swipe_back (HDY_DECK (window->main_deck), TRUE);

@@ -21,12 +21,19 @@
 #include "ephy-tab-view.h"
 
 #include "ephy-desktop-utils.h"
+#include "ephy-dnd.h"
 #include "ephy-embed-utils.h"
+#include "ephy-link.h"
+#include "ephy-settings.h"
+#include "ephy-shell.h"
+
+#define INSANE_NUMBER_OF_URLS 20
 
 struct _EphyTabView {
   GtkBin parent_instance;
 
   HdyTabView *tab_view;
+  HdyTabBar *tab_bar;
   HdyTabPage *current_page;
 };
 
@@ -450,4 +457,154 @@ GtkWidget *
 ephy_tab_view_get_current_page (EphyTabView *self)
 {
   return hdy_tab_page_get_child (get_current_page (self));
+}
+
+static void
+drag_data_received_cb (EphyTabView      *self,
+                       HdyTabPage       *page,
+                       GdkDragContext   *context,
+                       GtkSelectionData *selection_data,
+                       guint             info,
+                       guint             time)
+{
+  GtkWidget *window;
+  EphyEmbed *embed;
+  GdkAtom target;
+  const guchar *data;
+
+  if (g_settings_get_boolean (EPHY_SETTINGS_LOCKDOWN,
+                              EPHY_PREFS_LOCKDOWN_ARBITRARY_URL))
+    return;
+
+  data = gtk_selection_data_get_data (selection_data);
+  if (gtk_selection_data_get_length (selection_data) <= 0 || data == NULL)
+    return;
+
+  embed = EPHY_EMBED (hdy_tab_page_get_child (page));
+  target = gtk_selection_data_get_target (selection_data);
+
+  window = gtk_widget_get_toplevel (GTK_WIDGET (self));
+
+  if (target == gdk_atom_intern (EPHY_DND_URL_TYPE, FALSE)) {
+    char **split;
+
+    /* URL_TYPE has format: url \n title */
+    split = g_strsplit ((const gchar *)data, "\n", 2);
+    if (split != NULL && split[0] != NULL && split[0][0] != '\0') {
+      ephy_link_open (EPHY_LINK (window), NULL, NULL, EPHY_LINK_NEW_TAB);
+      ephy_link_open (EPHY_LINK (window), split[0], embed,
+                      embed ? 0 : EPHY_LINK_NEW_TAB);
+    }
+    g_strfreev (split);
+  } else if (target == gdk_atom_intern (EPHY_DND_URI_LIST_TYPE, FALSE)) {
+    char **uris;
+    int i;
+
+    uris = gtk_selection_data_get_uris (selection_data);
+    if (uris == NULL)
+      return;
+
+    for (i = 0; i < INSANE_NUMBER_OF_URLS && uris[i] != NULL; i++) {
+      embed = ephy_link_open (EPHY_LINK (window), uris[i], embed,
+                              (embed && i == 0) ? 0 : EPHY_LINK_NEW_TAB);
+    }
+
+    g_strfreev (uris);
+  } else {
+    char *text;
+
+    text = (char *)gtk_selection_data_get_text (selection_data);
+    if (text != NULL) {
+      char *address;
+
+      address = ephy_embed_utils_normalize_or_autosearch_address (text);
+      ephy_link_open (EPHY_LINK (window), address, embed,
+                      embed ? 0 : EPHY_LINK_NEW_TAB);
+      g_free (address);
+      g_free (text);
+    }
+  }
+}
+
+static void
+visibility_policy_changed_cb (EphyTabView *self)
+{
+  EphyEmbedShellMode mode;
+  EphyPrefsUITabsBarVisibilityPolicy policy;
+
+  mode = ephy_embed_shell_get_mode (EPHY_EMBED_SHELL (ephy_shell_get_default ()));
+
+  if (is_desktop_pantheon ())
+    policy = EPHY_PREFS_UI_TABS_BAR_VISIBILITY_POLICY_ALWAYS;
+  else
+    policy = g_settings_get_enum (EPHY_SETTINGS_UI,
+                                  EPHY_PREFS_UI_TABS_BAR_VISIBILITY_POLICY);
+
+  hdy_tab_bar_set_autohide (self->tab_bar,
+                            policy != EPHY_PREFS_UI_TABS_BAR_VISIBILITY_POLICY_ALWAYS);
+  gtk_widget_set_visible (GTK_WIDGET (self->tab_bar),
+                          mode != EPHY_EMBED_SHELL_MODE_APPLICATION &&
+                          policy != EPHY_PREFS_UI_TABS_BAR_VISIBILITY_POLICY_NEVER);
+}
+
+static void
+expand_changed_cb (EphyTabView *self)
+{
+  gboolean expand = g_settings_get_boolean (EPHY_SETTINGS_UI,
+                                            EPHY_PREFS_UI_EXPAND_TABS_BAR);
+
+  hdy_tab_bar_set_expand_tabs (self->tab_bar, expand);
+}
+
+void
+ephy_tab_view_set_tab_bar (EphyTabView *self,
+                           HdyTabBar   *tab_bar)
+{
+  GtkTargetList *target_list;
+  static const GtkTargetEntry url_drag_types [] = {
+    { (char *)EPHY_DND_URI_LIST_TYPE, 0, 0 },
+    { (char *)EPHY_DND_URL_TYPE, 0, 1 },
+  };
+
+  self->tab_bar = tab_bar;
+
+  target_list = gtk_target_list_new (url_drag_types,
+                                     G_N_ELEMENTS (url_drag_types));
+  gtk_target_list_add_text_targets (target_list, 0);
+
+  hdy_tab_bar_set_extra_drag_dest_targets (self->tab_bar, target_list);
+
+  gtk_target_list_unref (target_list);
+
+  g_signal_connect_object (tab_bar, "extra-drag-data-received",
+                           G_CALLBACK (drag_data_received_cb), self,
+                           G_CONNECT_SWAPPED);
+
+  if (is_desktop_pantheon ()) {
+    GtkWidget *button;
+
+    hdy_tab_bar_set_autohide (tab_bar, FALSE);
+    hdy_tab_bar_set_expand_tabs (tab_bar, FALSE);
+
+    button = gtk_button_new_from_icon_name ("list-add-symbolic", GTK_ICON_SIZE_MENU);
+    /* Translators: tooltip for the new tab button */
+    gtk_widget_set_tooltip_text (button, _("Open a new tab"));
+    gtk_actionable_set_action_name (GTK_ACTIONABLE (button), "win.new-tab");
+    gtk_style_context_add_class (gtk_widget_get_style_context (button), "flat");
+    gtk_widget_show (button);
+
+    hdy_tab_bar_set_start_action_widget (tab_bar, button);
+  } else {
+    g_signal_connect_object (EPHY_SETTINGS_UI,
+                             "changed::" EPHY_PREFS_UI_TABS_BAR_VISIBILITY_POLICY,
+                             G_CALLBACK (visibility_policy_changed_cb), self,
+                             G_CONNECT_SWAPPED);
+
+    g_signal_connect_object (EPHY_SETTINGS_UI,
+                             "changed::" EPHY_PREFS_UI_EXPAND_TABS_BAR,
+                             G_CALLBACK (expand_changed_cb), self,
+                             G_CONNECT_SWAPPED);
+  }
+
+  visibility_policy_changed_cb (self);
 }
