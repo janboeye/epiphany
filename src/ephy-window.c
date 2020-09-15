@@ -2564,85 +2564,6 @@ ephy_window_set_active_tab (EphyWindow *window,
 }
 
 static void
-tab_accels_item_activate (GSimpleAction *action,
-                          GVariant      *parameter,
-                          gpointer       user_data)
-{
-  const char *action_name;
-  int tab_number;
-
-  action_name = g_action_get_name (G_ACTION (action));
-
-  tab_number = atoi (action_name + strlen ("accel-"));
-
-  ephy_tab_view_select_nth_page (EPHY_WINDOW (user_data)->tab_view, tab_number);
-}
-
-static void
-tab_accels_update (EphyWindow *window)
-{
-  int n_pages;
-  int i = 0;
-  GActionGroup *action_group;
-  char **actions;
-
-  action_group = gtk_widget_get_action_group (GTK_WIDGET (window), "tab");
-  actions = g_action_group_list_actions (action_group);
-
-  n_pages = ephy_tab_view_get_n_pages (window->tab_view);
-  for (i = 0; actions[i] != NULL; i++) {
-    if (strstr (actions[i], "accel-") != NULL) {
-      GAction *action = g_action_map_lookup_action (G_ACTION_MAP (action_group),
-                                                    actions[i]);
-      int tab_number = atoi (actions[i] + strlen ("accel-"));
-
-      g_simple_action_set_enabled (G_SIMPLE_ACTION (action), (tab_number < n_pages));
-    }
-  }
-
-  g_strfreev (actions);
-}
-
-#define TAB_ACCELS_N 10
-
-static void
-setup_tab_accels (EphyWindow *window)
-{
-  GActionGroup *action_group;
-  GApplication *app;
-  guint i;
-
-  action_group = gtk_widget_get_action_group (GTK_WIDGET (window), "tab");
-  app = g_application_get_default ();
-
-  for (i = 0; i < TAB_ACCELS_N; i++) {
-    GSimpleAction *simple_action;
-    char *action_name;
-    char *action_name_with_tab;
-    char *accel;
-
-    action_name = g_strdup_printf ("accel-%u", i);
-    action_name_with_tab = g_strconcat ("tab.", action_name, NULL);
-    accel = g_strdup_printf ("<alt>%u", (i + 1) % TAB_ACCELS_N);
-
-    simple_action = g_simple_action_new (action_name, NULL);
-
-    g_action_map_add_action (G_ACTION_MAP (action_group), G_ACTION (simple_action));
-    gtk_application_set_accels_for_action (GTK_APPLICATION (app),
-                                           action_name_with_tab,
-                                           (const gchar *[]) {accel, NULL});
-
-    g_signal_connect (G_ACTION (simple_action), "activate",
-                      G_CALLBACK (tab_accels_item_activate), window);
-
-    g_object_unref (simple_action);
-    g_free (accel);
-    g_free (action_name);
-    g_free (action_name_with_tab);
-  }
-}
-
-static void
 tab_view_setup_menu_cb (HdyTabView *tab_view,
                         HdyTabPage *page,
                         EphyWindow *window)
@@ -2800,8 +2721,6 @@ tab_view_page_attached_cb (HdyTabView *tab_view,
     window->present_on_insert = FALSE;
     g_idle_add ((GSourceFunc)present_on_idle_cb, g_object_ref (window));
   }
-
-  tab_accels_update (window);
 }
 
 static void
@@ -2821,8 +2740,6 @@ tab_view_page_detached_cb (HdyTabView *tab_view,
 
   g_signal_handlers_disconnect_by_func
     (ephy_embed_get_web_view (EPHY_EMBED (content)), G_CALLBACK (download_only_load_cb), window);
-
-  tab_accels_update (window);
 
   if (ephy_tab_view_get_n_pages (window->tab_view) == 0) {
     EphyShell *shell = ephy_shell_get_default ();
@@ -3739,9 +3656,6 @@ ephy_window_constructed (GObject *object)
   }
 
   ephy_gui_ensure_window_group (GTK_WINDOW (window));
-
-  /* Setup tab accels */
-  setup_tab_accels (window);
 
   window->tab_view = setup_tab_view (window);
   window->tab_bar = hdy_tab_bar_new ();

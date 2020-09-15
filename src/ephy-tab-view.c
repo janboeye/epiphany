@@ -556,11 +556,37 @@ expand_changed_cb (EphyTabView *self)
   hdy_tab_bar_set_expand_tabs (self->tab_bar, expand);
 }
 
+static gboolean
+is_layout_reversed (void)
+{
+  GtkSettings *settings;
+  g_autofree char *layout = NULL;
+  g_auto (GStrv) parts = NULL;
+
+  settings = gtk_settings_get_default ();
+  g_object_get (settings, "gtk-decoration-layout", &layout, NULL);
+
+  parts = g_strsplit (layout, ":", 2);
+
+  /* Invalid layout, don't even try */
+  if (g_strv_length (parts) < 2)
+    return FALSE;
+
+  return !!g_strrstr (parts[0], "close");
+}
+
+static void
+notify_decoration_layout_cb (EphyTabView *self)
+{
+  hdy_tab_bar_set_inverted (self->tab_bar, is_layout_reversed ());
+}
+
 void
 ephy_tab_view_set_tab_bar (EphyTabView *self,
                            HdyTabBar   *tab_bar)
 {
   GtkTargetList *target_list;
+  GtkSettings *settings;
   static const GtkTargetEntry url_drag_types [] = {
     { (char *)EPHY_DND_URI_LIST_TYPE, 0, 0 },
     { (char *)EPHY_DND_URL_TYPE, 0, 1 },
@@ -605,6 +631,11 @@ ephy_tab_view_set_tab_bar (EphyTabView *self,
                              G_CALLBACK (expand_changed_cb), self,
                              G_CONNECT_SWAPPED);
   }
+
+  settings = gtk_settings_get_default ();
+  g_signal_connect_object (settings, "notify::gtk-decoration-layout",
+                           G_CALLBACK (notify_decoration_layout_cb), self,
+                           G_CONNECT_SWAPPED);
 
   visibility_policy_changed_cb (self);
 }
