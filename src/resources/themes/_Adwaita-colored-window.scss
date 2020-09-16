@@ -286,11 +286,11 @@ tabbar {
     .tab-close-button,
     .tab-secondary-icon.clickable {
       &:hover {
-        background: hdyalpha($fg_color, .15);
+        background: gtkalpha($fg_color, .15);
       }
 
       &:active {
-        background: hdyalpha(black, .2);
+        background: gtkalpha(black, .2);
       }
     }
   }
