@@ -2584,7 +2584,7 @@ tab_view_setup_menu_cb (HdyTabView *tab_view,
     position = hdy_tab_view_get_page_position (tab_view, page);
     pinned = hdy_tab_page_get_pinned (page);
 
-    view = ephy_embed_get_web_view (EPHY_EMBED (hdy_tab_page_get_content (page)));
+    view = ephy_embed_get_web_view (EPHY_EMBED (hdy_tab_page_get_child (page)));
     audio_playing = webkit_web_view_is_playing_audio (WEBKIT_WEB_VIEW (view));
     muted = webkit_web_view_get_is_muted (WEBKIT_WEB_VIEW (view));
   }
@@ -2624,7 +2624,7 @@ tab_view_setup_menu_cb (HdyTabView *tab_view,
                              g_variant_new_boolean (muted));
 
   action = g_action_map_lookup_action (G_ACTION_MAP (action_group),
-                                       "close-tab");
+                                       "close");
   g_simple_action_set_enabled (G_SIMPLE_ACTION (action), !page || !pinned);
 }
 

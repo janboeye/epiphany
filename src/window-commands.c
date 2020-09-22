@@ -2883,12 +2883,15 @@ window_cmd_change_tabs_mute_state (GSimpleAction *action,
   EphyWebView *view;
   gboolean mute;
 
-  mute = g_variant_get_boolean (state);
-
-  embed = ephy_embed_container_get_active_child (EPHY_EMBED_CONTAINER (window));
+  embed = EPHY_EMBED (ephy_tab_view_get_current_page (ephy_window_get_tab_view (window)));
   g_assert (embed != NULL);
 
   view = ephy_embed_get_web_view (embed);
+
+  if (!webkit_web_view_is_playing_audio (WEBKIT_WEB_VIEW (view)))
+    return;
+
+  mute = !webkit_web_view_get_is_muted (WEBKIT_WEB_VIEW (view));
 
   webkit_web_view_set_is_muted (WEBKIT_WEB_VIEW (view), mute);
 
