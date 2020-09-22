@@ -2621,7 +2621,7 @@ tab_view_setup_menu_cb (HdyTabView *tab_view,
                                        "mute");
   g_simple_action_set_enabled (G_SIMPLE_ACTION (action), !page || audio_playing);
   g_simple_action_set_state (G_SIMPLE_ACTION (action),
-                             g_variant_new_boolean (muted));
+                             g_variant_new_boolean (!page || muted));
 
   action = g_action_map_lookup_action (G_ACTION_MAP (action_group),
                                        "close");
