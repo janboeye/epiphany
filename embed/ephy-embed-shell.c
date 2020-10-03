@@ -52,6 +52,7 @@
 
 typedef struct {
   WebKitWebContext *web_context;
+  WebKitNetworkProxySettings *web_proxy;
   EphyHistoryService *global_history_service;
   EphyGSBService *global_gsb_service;
   EphyEncodings *encodings;
@@ -845,7 +846,11 @@ ephy_embed_shell_startup (GApplication *application)
   webkit_web_context_add_path_to_sandbox (priv->web_context, ephy_profile_dir (), TRUE);
   webkit_web_context_add_path_to_sandbox (priv->web_context, ephy_cache_dir (), TRUE);
   webkit_web_context_add_path_to_sandbox (priv->web_context, ephy_config_dir (), TRUE);
-
+  if (g_strcmp0 (g_settings_get_string (EPHY_SETTINGS_MAIN, EPHY_PREFS_PROXY_URL),"") != 0) {
+	  priv->web_proxy = webkit_network_proxy_settings_new(g_settings_get_string (EPHY_SETTINGS_MAIN, EPHY_PREFS_PROXY_URL), NULL);
+      webkit_web_context_set_network_proxy_settings(priv->web_context, WEBKIT_NETWORK_PROXY_MODE_CUSTOM,
+		  priv->web_proxy);
+  }
 #if DEVELOPER_MODE
   webkit_web_context_add_path_to_sandbox (priv->web_context, BUILD_ROOT, TRUE);
 #endif
@@ -1275,6 +1280,22 @@ ephy_embed_shell_get_web_context (EphyEmbedShell *shell)
   EphyEmbedShellPrivate *priv = ephy_embed_shell_get_instance_private (shell);
 
   return priv->web_context;
+}
+
+WebKitNetworkProxySettings *
+ephy_embed_shell_get_web_proxy (EphyEmbedShell *shell)
+{
+  EphyEmbedShellPrivate *priv = ephy_embed_shell_get_instance_private (shell);
+
+  return priv->web_proxy;
+}
+
+void
+ephy_embed_shell_set_web_proxy (EphyEmbedShell *shell, WebKitNetworkProxySettings *settings)
+{
+  EphyEmbedShellPrivate *priv = ephy_embed_shell_get_instance_private (shell);
+
+  priv->web_proxy = settings;
 }
 
 EphyDownloadsManager *

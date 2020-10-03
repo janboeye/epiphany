@@ -972,6 +972,56 @@
                 <property name="tab_fill">False</property>
               </packing>
             </child>
+            <child>
+              <object class="HdyPreferencesPage" id="proxy_page">
+                <property name="icon_name">emblem-synchronizing-symbolic</property>
+                <property name="title" translatable="yes">Proxy</property>
+                <property name="visible">True</property>
+                <style>
+                  <class name="background"/>
+                </style>
+                <child>
+                  <object class="HdyPreferencesGroup" id="proxy_options_box">
+                    <property name="title" translatable="yes">Proxy Options</property>
+                    <property name="visible">True</property>
+                                    <child>
+                      <object class="HdyActionRow">
+                        <property name="activatable_widget">proxy_radiobutton</property>
+                        <property name="title" translatable="yes">_Proxy</property>
+                        <property name="use_underline">True</property>
+                        <property name="visible">True</property>
+                        <child type="prefix">
+                          <object class="GtkRadioButton" id="proxy_radiobutton">
+                            <property name="valign">center</property>
+                            <property name="group">proxy_radiobutton</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                        <child type="action">
+                          <object class="GtkEntry" id="proxy_entry">
+                            <property name="hexpand">True</property>
+                            <property name="secondary-icon-name">edit-clear-symbolic</property>
+                            <property name="valign">center</property>
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                      </object>
+                </child>
+                  </object>
+                  
+                </child>
+
+              </object>
+            </child>
+            <child type="tab">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Proxy</property>
+              </object>
+              <packing>
+                <property name="tab_fill">False</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="expand">True</property>

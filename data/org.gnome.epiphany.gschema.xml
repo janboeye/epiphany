@@ -17,6 +17,11 @@
 			<summary>Home page</summary>
 			<description>Address of the user’s home page.</description>
 		</key>
+		<key type="s" name="proxy-url">
+			<default>''</default>
+			<summary>Proxy URL</summary>
+			<description>Address of Proxy.</description>
+		</key>
 		<key type="s" name="default-search-engine">
 			<default>'DuckDuckGo'</default>
 			<summary>Default search engine.</summary>

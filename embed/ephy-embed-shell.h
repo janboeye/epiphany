@@ -62,6 +62,8 @@ struct _EphyEmbedShellClass
 EphyEmbedShell    *ephy_embed_shell_get_default                (void);
 const char        *ephy_embed_shell_get_guid                   (EphyEmbedShell   *shell);
 WebKitWebContext  *ephy_embed_shell_get_web_context            (EphyEmbedShell   *shell);
+WebKitNetworkProxySettings *ephy_embed_shell_get_web_proxy (EphyEmbedShell *shell);
+void ephy_embed_shell_set_web_proxy (EphyEmbedShell *shell, WebKitNetworkProxySettings *settings);
 EphyHistoryService
                   *ephy_embed_shell_get_global_history_service (EphyEmbedShell   *shell);
 EphyGSBService    *ephy_embed_shell_get_global_gsb_service     (EphyEmbedShell   *shell);

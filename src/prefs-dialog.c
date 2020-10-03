@@ -148,6 +148,10 @@ struct _PrefsDialog {
   GtkWidget *sync_device_name_save_button;
   GtkWidget *sync_device_name_cancel_button;
 
+  /* proxy */
+  GtkWidget *proxy_entry;
+
+
   WebKitWebView *fxa_web_view;
   WebKitUserContentManager *fxa_manager;
   WebKitUserScript *fxa_script;
@@ -1033,6 +1037,9 @@ prefs_dialog_class_init (PrefsDialogClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, on_sync_device_name_cancel_button_clicked);
   gtk_widget_class_bind_template_callback (widget_class, on_default_zoom_spin_button_output);
   gtk_widget_class_bind_template_callback (widget_class, on_default_zoom_spin_button_value_changed);
+
+  /* proxy */
+  gtk_widget_class_bind_template_child (widget_class, PrefsDialog, proxy_entry);
 }
 
 static void
@@ -2045,6 +2052,34 @@ custom_homepage_entry_changed (GtkEntry    *entry,
 }
 
 static void
+proxy_entry_changed (GtkEntry    *entry,
+                               PrefsDialog *dialog)
+{
+   EphyEmbedShell *shell;
+   WebKitWebContext *embed_context;
+   WebKitNetworkProxySettings *proxy;
+
+   g_settings_set_string (EPHY_SETTINGS_MAIN, EPHY_PREFS_PROXY_URL,
+                           gtk_entry_get_text (entry));
+   shell = ephy_embed_shell_get_default ();
+   embed_context = ephy_embed_shell_get_web_context (shell);
+   proxy = ephy_embed_shell_get_web_proxy(shell);
+   if(proxy) {
+	   webkit_network_proxy_settings_free(proxy);
+	   ephy_embed_shell_set_web_proxy(shell, NULL);
+   }
+   if (g_strcmp0 (g_settings_get_string (EPHY_SETTINGS_MAIN, EPHY_PREFS_PROXY_URL),"") != 0) {
+	   proxy = webkit_network_proxy_settings_new(g_settings_get_string (EPHY_SETTINGS_MAIN, EPHY_PREFS_PROXY_URL), NULL);
+       webkit_web_context_set_network_proxy_settings(embed_context, WEBKIT_NETWORK_PROXY_MODE_CUSTOM,
+	          proxy);
+       ephy_embed_shell_set_web_proxy(shell, proxy);
+   } else {
+	   webkit_web_context_set_network_proxy_settings(embed_context, WEBKIT_NETWORK_PROXY_MODE_DEFAULT,
+		      NULL);
+   }
+}
+
+static void
 custom_homepage_entry_icon_released (GtkEntry             *entry,
                                      GtkEntryIconPosition  icon_pos)
 {
@@ -2126,6 +2161,14 @@ setup_general_page (PrefsDialog *dialog)
     gtk_widget_set_sensitive (dialog->custom_homepage_entry, FALSE);
     gtk_entry_set_text (GTK_ENTRY (dialog->custom_homepage_entry), "");
   }
+
+  gtk_widget_set_sensitive (dialog->proxy_entry, TRUE);
+  gtk_entry_set_text (GTK_ENTRY (dialog->proxy_entry),
+                      g_settings_get_string (EPHY_SETTINGS_MAIN, EPHY_PREFS_PROXY_URL));
+
+  g_signal_connect (dialog->proxy_entry, "changed",
+                    G_CALLBACK (proxy_entry_changed),
+                    dialog);
 
   g_signal_connect (dialog->custom_homepage_entry, "changed",
                     G_CALLBACK (custom_homepage_entry_changed),
